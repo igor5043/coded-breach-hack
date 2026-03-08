@@ -16,7 +16,8 @@
             height: 100vh;
             margin: 0;
             text-align: center;
-            overflow: hidden; /* Prevent scrolling during simulation */
+            overflow: hidden;
+            cursor: pointer; /* Hint that interaction is needed */
         }
 
         /* --- 2. THE 3D CANVAS (Visible 0s - 13s) --- */
@@ -26,7 +27,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            display: block; /* Visible initially */
+            display: block;
         }
 
         /* --- 3. REVEAL MESSAGE (15s+) --- */
@@ -39,7 +40,7 @@
             left: 50%;
             transform: translate(-50%, -50%);
             width: 80%;
-            animation: textTyping 2s steps(40, end); /* Typing effect for the reveal */
+            animation: textTyping 2s steps(40, end);
         }
 
         .finalText {
@@ -60,21 +61,19 @@
             text-shadow: 2px 2px 5px rgba(255, 0, 0, 0.5);
         }
 
-        /* --- 4. ANIMATIONS (Glitch & Blink) --- */
-        @keyframes blink { 50% { opacity: 0; } }
-
+        /* --- 4. ANIMATIONS --- */
         @keyframes textTyping {
             from { width: 0; }
             to { width: 100%; }
         }
     </style>
 </head>
-<body onload="startBreachPrank()">
+<body id="breachBody">
 
     <canvas id="c"></canvas>
 
     <div id="revealMessage">
-        <p class="finalText">SYSTEM ERROR: HUMAN FALLIBILITY.</p>
+        <h1 style="color: red; font-family: 'Courier New', monospace;">SYSTEM ERROR: HUMAN FALLIBILITY.</h1>
         <p class="finalText">
             In 2026, the breach isn't digital; it's social.<br>
             Your trust is the backdoor. Wake up.
@@ -89,18 +88,40 @@
     <script src="https://ajax.googleapis.com/ajax/libs/threejs/r84/three.min.js"></script>
 
     <script>
+        // Use a flag to ensure the prank only runs once.
+        let prankStarted = false;
+
+        // --- User interaction (a click) triggers the prank ---
+        // This grants the 'vibrate' permission.
+        document.getElementById('breachBody').addEventListener('click', () => {
+            if (prankStarted) return;
+            prankStarted = true;
+            startBreachPrank();
+        });
+
         function startBreachPrank() {
-            // Check if the browser supports vibration (Haptics)
             if (!("vibrate" in navigator)) {
                 console.log("Haptics not supported. Visuals only.");
+                // (Skip haptics, just run visuals)
+            } else {
+                // VISCERAL HAPTICS START
+                // Wait 1 second (suspense), then start.
+                setTimeout(() => {
+                    navigator.vibrate([
+                        50, 100, 50, 200, 1500,  // Stutter, long rumble
+                        200, 1500,               // Pause
+                        50, 50, 50, 200,          // Quick triple tap
+                        4000, 500,                // Long vibration
+                        100, 100, 100             // Staccato bursts
+                    ]);
+                }, 1000);
             }
 
             // ==========================================================
-            // --- 1. THREE.JS 3D ENGINE SETUP (0s - 13s) ---
+            // --- 1. THREE.JS 3D ENGINE SETUP (AAA Graphics) ---
             // ==========================================================
-            // We set up the basic structure for the AAA graphics.
             const canvas = document.querySelector('#c');
-            const renderer = new THREE.WebGLRenderer({canvas, alpha: true});
+            const renderer = new THREE.WebGLRenderer({canvas, alpha: true, antialias: true});
             renderer.setSize(window.innerWidth, window.innerHeight);
 
             const scene = new THREE.Scene();
@@ -113,20 +134,18 @@
             camera.position.z = 2;
 
             // --- A. THE ARTIFACT: "Neural Breach Cube" ---
-            // A complex low-poly geometry that rotates.
-            const geometry = new THREE.IcosahedronGeometry(0.5, 0); // AAA Low Poly shape
+            // A complex geometry made of cold, glowing lines.
+            const geometry = new THREE.OctahedronGeometry(0.5, 0); // AAA geometry shape
             const material = new THREE.MeshPhongMaterial({
                 color: 0x00ffff, // Cold Cyan
-                shading: THREE.FlatShading, // Make it look metallic/geometric
-                wireframe: true // AAA Digital look
+                shading: THREE.FlatShading,
+                wireframe: true // AAA digital look
             });
             const mesh = new THREE.Mesh(geometry, material);
             scene.add(mesh);
 
             // --- B. LIGHTING (Cinematic) ---
-            const color = 0xFFFFFF;
-            const intensity = 1;
-            const light = new THREE.DirectionalLight(color, intensity);
+            const light = new THREE.DirectionalLight(0xffffff, 1);
             light.position.set(-1, 2, 4);
             scene.add(light);
 
@@ -134,9 +153,8 @@
             subtleRed.position.set(2, 2, 2);
             scene.add(subtleRed);
 
-            // --- C. THE GLITCH SHADER EFFECT (AAA Visuals) ---
-            // We're using a simple shader to create a CRT-style flicker/glitch.
-            // This replaces the complex post-processing stack for performance.
+            // --- C. AAA VISUAL MELTDOWN SHADER (Glitch & Surge) ---
+            // (Shaders integrated for real-time performance)
             let time = 0;
             material.onBeforeCompile = (shader) => {
                 shader.uniforms.time = { value: 0 };
@@ -147,19 +165,18 @@
                     `#include <begin_vertex>`,
                     `
                     #include <begin_vertex>
-                    // Glitch the geometry slightly using time
-                    transformed.x += sin(time * 10.0 + transformed.y * 5.0) * 0.05;
-                    transformed.y += cos(time * 10.0 + transformed.x * 5.0) * 0.05;
+                    // Glitch the geometry using time
+                    transformed.x += sin(time * 20.0 + transformed.y * 10.0) * 0.1;
+                    transformed.y += cos(time * 20.0 + transformed.x * 10.0) * 0.1;
                     `
                 );
                 material.userData.shader = shader;
             };
 
-
-            // --- D. THE ANIMATION LOOP (Core 3D heartbeat) ---
+            // --- D. THE ANIMATION LOOP (Heartbeat) ---
             function render() {
                 time += 0.01;
-                // Only animate and render if the canvas is visible
+                // Only render if the canvas is visible
                 if (canvas.style.display !== 'none') {
                     mesh.rotation.x += 0.005;
                     mesh.rotation.y += 0.01;
@@ -168,40 +185,18 @@
                     if (material.userData.shader) {
                         material.userData.shader.uniforms.time.value = time;
                     }
-
                     renderer.render(scene, camera);
                 }
                 requestAnimationFrame(render);
             }
             requestAnimationFrame(render);
 
-
-            // ==========================================================
-            // --- PHASE 2: Haptic Compromise (Seconds 3 - 13) ---
-            // ==========================================================
-            // Wait 3 seconds, then start the random, unsettling vibration pattern.
-            setTimeout(() => {
-                if ("vibrate" in navigator) {
-                    navigator.vibrate([
-                        50, 100, 50, 200, 1500,  // Stutter, long rumble
-                        200, 1000,               // Pause
-                        50, 50, 50, 200,          // Quick triple tap
-                        3000, 500,                // Long vibration
-                        100, 100, 100             // Staccato bursts
-                    ]);
-                }
-            }, 3000); // Trigger after a 3-second suspense delay.
-
-
             // ==========================================================
             // --- PHASE 3: The Reveal (Second 15+) ---
             // ==========================================================
-            // After 15 seconds, clear the screen and show the final message.
             setTimeout(() => {
-                // 1. Stop all vibration.
-                if ("vibrate" in navigator) {
-                    navigator.vibrate(0);
-                }
+                // 1. Stop all haptics permanently.
+                if ("vibrate" in navigator) { navigator.vibrate(0); }
 
                 // 2. Hide the 3D visual engine entirely.
                 canvas.style.display = 'none';
@@ -211,7 +206,7 @@
 
                 // 4. Finalize the shift with a dark red background.
                 document.body.style.backgroundColor = '#200000';
-            }, 15000); // Total prank duration is 15 seconds.
+            }, 15000); // 15 seconds total.
         }
     </script>
 </body>
