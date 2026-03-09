@@ -112,6 +112,27 @@
             white-space: pre-wrap; /* Preserve line breaks */
         }
 
+        /* --- 5. PHASE 4: THE SAFETY REVEAL (15s+) --- */
+        #safetyReveal {
+            display: none; /* Hidden by default */
+            color: #00ff00;
+            font-family: 'Courier New', Courier, monospace;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%;
+        }
+
+        .finalSafetyText {
+            font-size: 1.5em;
+            font-weight: bold;
+            line-height: 1.8;
+            letter-spacing: 2px;
+            text-shadow: 2px 2px 5px rgba(0, 255, 0, 0.5);
+            margin-bottom: 20px;
+        }
+
         .brandName {
             display: block;
             margin-top: 35px;
@@ -124,7 +145,7 @@
             text-shadow: 2px 2px 5px rgba(255, 0, 0, 0.5);
         }
 
-        /* --- 5. ANIMATIONS (Glitch & Blink) --- */
+        /* --- 6. ANIMATIONS (Glitch & Blink) --- */
         @keyframes blink { 50% { opacity: 0; } }
 
         /* A dynamic CRT screen flicker effect for realism */
@@ -172,17 +193,26 @@
             We'll be in touch.<br>
             **You can NOT delete this.**
         </p>
+    </div>
+
+    <div id="safetyReveal">
+        <p class="finalSafetyText">SYSTEM ERROR: HUMAN FALLIBILITY.</p>
+        <p class="finalSafetyText">
+            Relax.<br>
+            You are not hacked.<br>
+            (But it was that easy.)
+        </p>
         <span class="brandName">Coded Breach</span>
     </div>
 
     <script>
         // Check if the browser supports vibration (Haptics)
         if (!("vibrate" in navigator)) {
-            console.log("Haptics not supported on this device. Simulation will rely only on visuals.");
+            console.log("Haptics not supported. Visuals only.");
         }
 
         // --- 1. User interaction (a click) triggers the prank ---
-        // This makes the "Lure" mandatory and allows the haptics (Android only).
+        // This makes the "Lure" mandatory and allows haptics (Android only).
         document.getElementById('lureButton').addEventListener('click', () => {
             // 1. Clear the lure and show the attack display visual
             document.getElementById('lureDisplay').style.display = 'none';
@@ -244,11 +274,28 @@
                 // 2. Hide the attack visual.
                 document.getElementById('attackDisplay').style.display = 'none';
 
-                // 3. Display the final, scary message.
+                // 3. Display the first, scary message.
                 document.getElementById('revealMessage').style.display = 'block';
 
-                // 4. Finalize the shift with a dark red background.
+                // 4. Set the final shift with a dark red background.
                 document.body.style.backgroundColor = '#200000';
+
+                // ==========================================================
+                // --- PHASE 4: The SAFETY REVEAL (5 seconds later) ---
+                // ==========================================================
+                setTimeout(() => {
+                    // 1. Remove the scary message visual.
+                    document.getElementById('revealMessage').style.display = 'none';
+
+                    // 2. Clear the red background.
+                    document.body.style.backgroundColor = 'black';
+
+                    // 3. Display the final, safety-confirming message.
+                    document.getElementById('safetyReveal').style.display = 'block';
+
+                    // 4. Final visual confirmation is now standard Matrix green.
+                    document.body.style.color = '#00ff00';
+                }, 5000); // TRIGGER THE SAFETY REVEAL 5 SECONDS LATER.
             }
         }
     </script>
