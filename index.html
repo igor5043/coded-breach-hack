@@ -16,21 +16,83 @@
             height: 100vh;
             margin: 0;
             text-align: center;
-            overflow: hidden;
-            cursor: pointer; /* Hint that interaction is needed */
+            overflow: hidden; /* Prevent scrolling during simulation */
         }
 
-        /* --- 2. THE 3D CANVAS (Visible 0s - 13s) --- */
-        #c {
+        /* --- 2. PHASE 1: THE TRAP (Visible first) --- */
+        #lureDisplay {
+            width: 80%;
+            display: flex; /* Initially visible */
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #lureTitle {
+            font-size: 1.5em;
+            color: white;
+            text-transform: uppercase;
+            margin-bottom: 30px;
+        }
+
+        #lureButton {
+            background: none;
+            color: #00ff00;
+            border: 2px solid #00ff00;
+            font-family: inherit;
+            font-size: 1.4em;
+            padding: 20px 40px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            animation: blink 1.2s infinite; /* Make the button blink slowly */
+        }
+
+        /* --- 3. PHASE 2: ATTACK PROGRESS (0s - 10s) --- */
+        #attackDisplay {
+            width: 85%;
+            display: none; /* Hidden initially */
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #alertTitle {
+            color: red;
+            font-size: 2em;
+            text-transform: uppercase;
+            animation: blink 0.5s infinite; /* Fast blinking red title */
+            margin-bottom: 20px;
+        }
+
+        /* Loading Bar (AAA Visualization) */
+        #progressBarContainer {
+            width: 100%;
+            height: 30px;
+            border: 2px solid #00ff00;
+            background-color: #1a1a1a;
+            position: relative;
+            margin-bottom: 15px;
+        }
+
+        #progressBar {
+            width: 100%; /* Start full */
+            height: 100%;
+            background-color: #00ff00;
             position: absolute;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
-            display: block;
         }
 
-        /* --- 3. REVEAL MESSAGE (15s+) --- */
+        #countdown {
+            font-size: 3em;
+            color: white;
+            font-weight: bold;
+            font-family: sans-serif; /* For a clear, sharp number */
+            text-shadow: 2px 2px 10px rgba(0, 255, 0, 0.5);
+        }
+
+        /* --- 4. PHASE 3: THE REVEAL (Second 10+) --- */
         #revealMessage {
             display: none; /* Hidden by default */
             color: white;
@@ -39,19 +101,20 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 80%;
-            animation: textTyping 2s steps(40, end);
+            width: 85%;
         }
 
         .finalText {
             font-size: 1.3em;
             font-weight: bold;
-            line-height: 1.6;
+            line-height: 1.5;
+            animation: textTyping 3s steps(40, end); /* Long typing effect */
+            white-space: pre-wrap; /* Preserve line breaks */
         }
 
         .brandName {
             display: block;
-            margin-top: 25px;
+            margin-top: 35px;
             font-size: 2.5em;
             color: red;
             font-family: 'Courier New', monospace;
@@ -61,7 +124,20 @@
             text-shadow: 2px 2px 5px rgba(255, 0, 0, 0.5);
         }
 
-        /* --- 4. ANIMATIONS --- */
+        /* --- 5. ANIMATIONS (Glitch & Blink) --- */
+        @keyframes blink { 50% { opacity: 0; } }
+
+        /* A dynamic CRT screen flicker effect for realism */
+        @keyframes crtFlicker {
+            0% { opacity: 0.95; transform: scale(1); }
+            5% { opacity: 1; transform: scale(1.002); }
+            10% { opacity: 0.95; transform: scale(1); }
+            100% { opacity: 0.95; transform: scale(1); }
+        }
+
+        /* Apply flicker to the entire attack screen initially */
+        #attackDisplay { animation: crtFlicker 0.1s infinite; }
+
         @keyframes textTyping {
             from { width: 0; }
             to { width: 100%; }
@@ -70,143 +146,110 @@
 </head>
 <body id="breachBody">
 
-    <canvas id="c"></canvas>
+    <div id="lureDisplay">
+        <h1 id="lureTitle">CRITICAL SYSTEM ERROR.<br>MANUAL RESET REQUIRED.</h1>
+        <button id="lureButton">CONFIRM RESET<br>(If you dare)</button>
+    </div>
+
+    <div id="attackDisplay">
+        <h1 id="alertTitle">!!! COMPROMISING DEVICE !!!</h1>
+        <p>REVERSE BREACH INITIALIZING...</p>
+        <div id="progressBarContainer">
+            <div id="progressBar"></div>
+        </div>
+        <div id="countdown">10</div>
+    </div>
 
     <div id="revealMessage">
-        <h1 style="color: red; font-family: 'Courier New', monospace;">SYSTEM ERROR: HUMAN FALLIBILITY.</h1>
         <p class="finalText">
-            In 2026, the breach isn't digital; it's social.<br>
-            Your trust is the backdoor. Wake up.
-        </p>
-        <p class="finalText">
-            You have NOT been hacked.<br>
-            ...But it was that easy.
+            SYSTEM_STATUS: COMPROMISED.<br><br>
+            While you watched that countdown, our **AI Proxy Bot** completed its data exfiltration sweep.<br><br>
+            We have **everything**.<br>
+            ...The unread texts.<br>
+            ...The embarrassing selfies.<br>
+            ...The location data from that *one* Tuesday.<br><br>
+            Sleep tight.<br>
+            We'll be in touch.<br>
+            **You can NOT delete this.**
         </p>
         <span class="brandName">Coded Breach</span>
     </div>
 
-    <script src="https://ajax.googleapis.com/ajax/libs/threejs/r84/three.min.js"></script>
-
     <script>
-        // Use a flag to ensure the prank only runs once.
-        let prankStarted = false;
+        // Check if the browser supports vibration (Haptics)
+        if (!("vibrate" in navigator)) {
+            console.log("Haptics not supported on this device. Simulation will rely only on visuals.");
+        }
 
-        // --- User interaction (a click) triggers the prank ---
-        // This grants the 'vibrate' permission.
-        document.getElementById('breachBody').addEventListener('click', () => {
-            if (prankStarted) return;
-            prankStarted = true;
-            startBreachPrank();
+        // --- 1. User interaction (a click) triggers the prank ---
+        // This makes the "Lure" mandatory and allows the haptics (Android only).
+        document.getElementById('lureButton').addEventListener('click', () => {
+            // 1. Clear the lure and show the attack display visual
+            document.getElementById('lureDisplay').style.display = 'none';
+            document.getElementById('attackDisplay').style.display = 'flex';
+            startBreachAttack();
         });
 
-        function startBreachPrank() {
-            if (!("vibrate" in navigator)) {
-                console.log("Haptics not supported. Visuals only.");
-                // (Skip haptics, just run visuals)
-            } else {
-                // VISCERAL HAPTICS START
-                // Wait 1 second (suspense), then start.
+        function startBreachAttack() {
+            // VISCERAL HAPTICS START
+            // (Android only. This is 100% silent on iPhone.)
+            if ("vibrate" in navigator) {
+                // Wait 1 second (suspense), then start an aggressive pattern.
                 setTimeout(() => {
                     navigator.vibrate([
                         50, 100, 50, 200, 1500,  // Stutter, long rumble
-                        200, 1500,               // Pause
+                        200, 1500,                // Pause
                         50, 50, 50, 200,          // Quick triple tap
                         4000, 500,                // Long vibration
                         100, 100, 100             // Staccato bursts
                     ]);
-                }, 1000);
+                }, 1000); // 1-second suspense delay.
             }
 
             // ==========================================================
-            // --- 1. THREE.JS 3D ENGINE SETUP (AAA Graphics) ---
+            // --- PHASE 2: The Attack (Seconds 0 - 10) ---
             // ==========================================================
-            const canvas = document.querySelector('#c');
-            const renderer = new THREE.WebGLRenderer({canvas, alpha: true, antialias: true});
-            renderer.setSize(window.innerWidth, window.innerHeight);
+            const countdownEl = document.getElementById('countdown');
+            const progressBarEl = document.getElementById('progressBar');
+            let count = 10;
+            let progress = 100;
 
-            const scene = new THREE.Scene();
+            // Start the 1-second interval loop
+            const attackInterval = setInterval(() => {
+                count--;
+                progress -= 10; // Countdown 10% each second
 
-            const fov = 75;
-            const aspect = window.innerWidth / window.innerHeight;
-            const near = 0.1;
-            const far = 5;
-            const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
-            camera.position.z = 2;
+                // 1. Update the Countdown text
+                countdownEl.innerText = count;
 
-            // --- A. THE ARTIFACT: "Neural Breach Cube" ---
-            // A complex geometry made of cold, glowing lines.
-            const geometry = new THREE.OctahedronGeometry(0.5, 0); // AAA geometry shape
-            const material = new THREE.MeshPhongMaterial({
-                color: 0x00ffff, // Cold Cyan
-                shading: THREE.FlatShading,
-                wireframe: true // AAA digital look
-            });
-            const mesh = new THREE.Mesh(geometry, material);
-            scene.add(mesh);
+                // 2. Update the Loading Bar (shrink from right to left)
+                progressBarEl.style.width = progress + '%';
 
-            // --- B. LIGHTING (Cinematic) ---
-            const light = new THREE.DirectionalLight(0xffffff, 1);
-            light.position.set(-1, 2, 4);
-            scene.add(light);
+                // 3. (Optional) Increase intensity of visuals/sound here (0s-10s)
 
-            const subtleRed = new THREE.PointLight(0x300000, 1, 10); // Red contrast
-            subtleRed.position.set(2, 2, 2);
-            scene.add(subtleRed);
-
-            // --- C. AAA VISUAL MELTDOWN SHADER (Glitch & Surge) ---
-            // (Shaders integrated for real-time performance)
-            let time = 0;
-            material.onBeforeCompile = (shader) => {
-                shader.uniforms.time = { value: 0 };
-                shader.vertexShader = `
-                    uniform float time;
-                    ${shader.vertexShader}
-                `.replace(
-                    `#include <begin_vertex>`,
-                    `
-                    #include <begin_vertex>
-                    // Glitch the geometry using time
-                    transformed.x += sin(time * 20.0 + transformed.y * 10.0) * 0.1;
-                    transformed.y += cos(time * 20.0 + transformed.x * 10.0) * 0.1;
-                    `
-                );
-                material.userData.shader = shader;
-            };
-
-            // --- D. THE ANIMATION LOOP (Heartbeat) ---
-            function render() {
-                time += 0.01;
-                // Only render if the canvas is visible
-                if (canvas.style.display !== 'none') {
-                    mesh.rotation.x += 0.005;
-                    mesh.rotation.y += 0.01;
-
-                    // Update the glitch shader time
-                    if (material.userData.shader) {
-                        material.userData.shader.uniforms.time.value = time;
-                    }
-                    renderer.render(scene, camera);
+                // 4. End the loop at 0
+                if (count <= 0) {
+                    clearInterval(attackInterval);
+                    finalizeBreach(); // Finalize the prank.
                 }
-                requestAnimationFrame(render);
-            }
-            requestAnimationFrame(render);
+            }, 1000); // 1-second interval.
 
             // ==========================================================
-            // --- PHASE 3: The Reveal (Second 15+) ---
+            // --- PHASE 3: The Reveal (Triggered at second 10+) ---
             // ==========================================================
-            setTimeout(() => {
-                // 1. Stop all haptics permanently.
+            function finalizeBreach() {
+                // 1. Ensure all haptics stop.
                 if ("vibrate" in navigator) { navigator.vibrate(0); }
 
-                // 2. Hide the 3D visual engine entirely.
-                canvas.style.display = 'none';
+                // 2. Hide the attack visual.
+                document.getElementById('attackDisplay').style.display = 'none';
 
-                // 3. Display the final message.
+                // 3. Display the final, scary message.
                 document.getElementById('revealMessage').style.display = 'block';
 
                 // 4. Finalize the shift with a dark red background.
                 document.body.style.backgroundColor = '#200000';
-            }, 15000); // 15 seconds total.
+            }
         }
     </script>
 </body>
