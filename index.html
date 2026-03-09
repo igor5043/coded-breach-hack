@@ -108,7 +108,7 @@
             font-size: 1.3em;
             font-weight: bold;
             line-height: 1.5;
-            animation: textTyping 3s steps(40, end); /* Typing effect takes 3s */
+            animation: textTyping 3s steps(40, end); /* Long typing effect */
             white-space: pre-wrap; /* Preserve line breaks */
             width: 100%; /* Ensure width is set for the typing effect */
         }
@@ -175,7 +175,7 @@
 
     <div id="attackDisplay">
         <h1 id="alertTitle">!!! COMPROMISING DEVICE !!!</h1>
-        <p>REVERSE BREACH INITIALIZING...</p>
+        <p id="attackSub">REVERSE BREACH INITIALIZING...</p>
         <div id="progressBarContainer">
             <div id="progressBar"></div>
         </div>
@@ -183,39 +183,108 @@
     </div>
 
     <div id="revealMessage">
-        <p class="finalText" id="scaryText">
-            SYSTEM_STATUS: COMPROMISED.<br><br>
-            While you watched that countdown, our **AI Proxy Bot** completed its data exfiltration sweep.<br><br>
-            We have **everything**.<br>
-            ...The unread texts.<br>
-            ...The embarrassing selfies.<br>
-            ...The location data from that *one* Tuesday.<br><br>
-            Sleep tight.<br>
-            We'll be in touch.<br>
-            **You can NOT delete this.**
-        </p>
+        <p class="finalText" id="scaryText"></p>
     </div>
 
     <div id="safetyReveal">
-        <p class="finalSafetyText">SYSTEM ERROR: HUMAN FALLIBILITY.</p>
-        <p class="finalSafetyText">
-            Relax.<br>
-            You are not hacked.<br>
-            (But it was that easy.)
-        </p>
+        <p class="finalSafetyText" id="safetyTitle"></p>
+        <p class="finalSafetyText" id="safetyText"></p>
         <span class="brandName">Coded Breach</span>
     </div>
 
     <script>
+        // ==========================================================
+        // --- MULTI-LINGUAL TRANSLATION OBJECT (Your Job!) ---
+        // ==========================================================
+        const PRANK_TRANSLATIONS = {
+            // ENGLISH (Default & Fallback)
+            'en': {
+                'lureTitle': 'CRITICAL SYSTEM ERROR.<br>MANUAL RESET REQUIRED.',
+                'lureButton': 'CONFIRM RESET<br>(If you dare)',
+                'alertTitle': '!!! COMPROMISING DEVICE !!!',
+                'attackSub': 'REVERSE BREACH INITIALIZING...',
+                'scaryReveal': 'SYSTEM_STATUS: COMPROMISED.<br><br>While you watched that countdown, our **AI Proxy Bot** completed its data exfiltration sweep.<br><br>We have **everything**.<br>...The unread texts.<br>...The embarrassing selfies.<br>...The location data from that *one* Tuesday.<br><br>Sleep tight.<br>We\'ll be in touch.<br>**You can NOT delete this.**',
+                'safetyTitle': 'SYSTEM ERROR: HUMAN FALLIBILITY.',
+                'safetyReveal': 'Relax.<br>You are not hacked.<br>(But it was that easy.)'
+            },
+            // SPANISH (Example: Must be culturally frightening/funny)
+            'es': {
+                'lureTitle': 'ERROR CRÍTICO DEL SISTEMA.<br>REINICIO MANUAL REQUERIDO.',
+                'lureButton': 'CONFIRMAR REINICIO<br>(Si te atreves)',
+                'alertTitle': '!!! COMPROMETIENDO DISPOSITIVO !!!',
+                'attackSub': 'INICIALIZANDO BRECHA INVERSA...',
+                'scaryReveal': 'SITUACIÓN_DEL_SISTEMA: COMPROMETIDO.<br><br>Mientras mirabas esa cuenta regresiva, nuestro **Bot Proxy de IA** completó su exfiltración de datos.<br><br>Tenemos **todo**.<br>...Tus selfies vergonzosos.<br>...Tus mensajes sin leer.<br>...Tus datos de ubicación de ese *único* martes.<br><br>Dormid bien.<br>Nos pondremos en contacto.<br>**No puedes borrar esto.**',
+                'safetyTitle': 'ERROR DEL SISTEMA: FALIBILIDAD HUMANA.',
+                'safetyReveal': 'Tranquilo.<br>No has sido hackeado.<br>(Pero fue así de fácil.)'
+            },
+            // FRENCH (Example)
+            'fr': {
+                'lureTitle': 'ERREUR SYSTÈME CRITIQUE.<br>RÉINITIALISATION MANUELLE REQUISE.',
+                'lureButton': 'CONFIRMER LA RÉINITIALISATION<br>(Si vous osez)',
+                'alertTitle': '!!! COMPROMISSION DE L\'APPAREIL !!!',
+                'attackSub': 'INITIALISATION DE LA BRÈCHE INVERSE...',
+                'scaryReveal': 'ÉTAT_DU_SYSTÈME: COMPROMIS.<br><br>Pendant que vous regardiez ce compte à rebours, notre **Bot Proxy IA** a complété son scan d\'exfiltration de données.<br><br>Nous avons **tout**.<br>...Les selfies gênants.<br>...Les SMS non lus.<br>...Les données de localisation de ce *seul* mardi.<br><br>Dormez bien.<br>On se revoit bientôt.<br>**Vous NE pouvez pas effacer ça.**',
+                'safetyTitle': 'ERREUR SYSTÈME: FAILLIBILITÉ HUMAINE.',
+                'safetyReveal': 'Relax.<br>Vous n\'êtes pas hacké.<br>(Mais c\'était aussi facile.)'
+            },
+            // GERMAN (Example)
+            'de': {
+                'lureTitle': 'KRITISCHER SYSTEMFEHLER.<br>MANUELLER RESET ERFORDERLICH.',
+                'lureButton': 'RESET BESTÄTIGEN<br>(Wenn du dich traust)',
+                'alertTitle': '!!! GERÄTESICHERHEIT GEFÄHRDET !!!',
+                'attackSub': 'RÜCKWÄRTS-BRUCH INITIALISIERT...',
+                'scaryReveal': 'SYSTEMSTATUS: GEFÄHRDET.<br><br>Während du diesen Countdown angesehen hast, hat unser **KI-Proxy-Bot** seinen Datenexfiltrations-Scan abgeschlossen.<br><br>Wir haben **alles**.<br>...Die peinlichen Selfies.<br>...Die ungelesenen Texte.<br>...Die Standortdaten von diesem *einen* Dienstag.<br><br>Schlaf gut.<br>Wir melden uns.<br>**Das kannst du NICHT löschen.**',
+                'safetyTitle': 'SYSTEMFEHLER: MENSCHLICHES VERSAGEN.',
+                'safetyReveal': 'Entspann dich.<br>Du wurdest nicht gehackt.<br>(Aber es war so einfach.)'
+            },
+            // ADD MORE LANGUAGES HERE: (e.g., 'ja': { ... }, 'pt': { ... })
+        };
+
+        // ==========================================================
+        // --- 1. LANGUAGE DETECTION AND PAGE INITIALIZATION ---
+        // ==========================================================
+        window.addEventListener('load', initializeLocalizedPrank);
+
+        function initializeLocalizedPrank() {
+            // A. Detect the phone language (e.g., 'es-ES' becomes 'es')
+            let userLang = navigator.language || navigator.userLanguage;
+            userLang = userLang.split('-')[0]; // Extract base code
+
+            console.log("Detected phone language: " + userLang);
+
+            // B. Check if the detected language exists in our TRANSLATIONS object.
+            let activeTranslations;
+            if (PRANK_TRANSLATIONS.hasOwnProperty(userLang)) {
+                console.log("Localized language found: " + userLang);
+                activeTranslations = PRANK_TRANSLATIONS[userLang];
+            } else {
+                // FALLBACK: Use English if language is not defined.
+                console.log("Language not found. Fallback to English.");
+                activeTranslations = PRANK_TRANSLATIONS['en'];
+            }
+
+            // C. Populating the dynamic text areas on the page (before attack starts)
+            document.getElementById('lureTitle').innerHTML = activeTranslations['lureTitle'];
+            document.getElementById('lureButton').innerHTML = activeTranslations['lureButton'];
+            document.getElementById('alertTitle').innerHTML = activeTranslations['alertTitle'];
+            document.getElementById('attackSub').innerHTML = activeTranslations['attackSub'];
+            document.getElementById('scaryText').innerHTML = activeTranslations['scaryReveal'];
+            document.getElementById('safetyTitle').innerHTML = activeTranslations['safetyTitle'];
+            document.getElementById('safetyText').innerHTML = activeTranslations['safetyReveal'];
+        }
+
+
+        // ==========================================================
+        // --- CORE PRANK LOGIC (Final Safety Patched) ---
+        // ==========================================================
+
         // Check if the browser supports vibration (Haptics)
         if (!("vibrate" in navigator)) {
             console.log("Haptics not supported. Visuals only.");
         }
 
-        // --- 1. User interaction (a click) triggers the prank ---
-        // This makes the "Lure" mandatory and allows haptics (Android only).
+        // --- User interaction triggers the prank ---
         document.getElementById('lureButton').addEventListener('click', () => {
-            // 1. Clear the lure and show the attack display visual
             document.getElementById('lureDisplay').style.display = 'none';
             document.getElementById('attackDisplay').style.display = 'flex';
             startBreachAttack();
@@ -223,9 +292,8 @@
 
         function startBreachAttack() {
             // VISCERAL HAPTICS START
-            // (Android only. This is 100% silent on iPhone.)
+            // (Android only.)
             if ("vibrate" in navigator) {
-                // Wait 1 second (suspense), then start an aggressive pattern.
                 setTimeout(() => {
                     navigator.vibrate([
                         50, 100, 50, 200, 1500,  // Stutter, long rumble
@@ -234,86 +302,66 @@
                         4000, 500,                // Long vibration
                         100, 100, 100             // Staccato bursts
                     ]);
-                }, 1000); // 1-second suspense delay.
+                }, 1000); // 1s suspense delay.
             }
 
-            // ==========================================================
-            // --- PHASE 2: The Attack (Seconds 0 - 10) ---
-            // ==========================================================
+            // --- PHASE 2: Attack Progress (Seconds 0 - 10) ---
             const countdownEl = document.getElementById('countdown');
             const progressBarEl = document.getElementById('progressBar');
             let count = 10;
             let progress = 100;
 
-            // Start the 1-second interval loop
             const attackInterval = setInterval(() => {
                 count--;
                 progress -= 10; // Countdown 10% each second
 
-                // 1. Update the Countdown text
                 countdownEl.innerText = count;
-
-                // 2. Update the Loading Bar (shrink from right to left)
                 progressBarEl.style.width = progress + '%';
 
-                // 3. (Optional) Increase intensity of visuals/sound here (0s-10s)
-
-                // 4. End the loop at 0
                 if (count <= 0) {
                     clearInterval(attackInterval);
                     finalizeBreach(); // Finalize the prank.
                 }
             }, 1000); // 1-second interval.
+        }
 
-            // ==========================================================
-            // --- PHASE 3: The Reveal (Triggered at second 10+) ---
-            // ==========================================================
-            function finalizeBreach() {
-                // 1. Ensure all haptics stop.
-                if ("vibrate" in navigator) { navigator.vibrate(0); }
+        function finalizeBreach() {
+            // 1. Ensure all haptics stop.
+            if ("vibrate" in navigator) { navigator.vibrate(0); }
 
-                // 2. Hide the attack visual.
-                document.getElementById('attackDisplay').style.display = 'none';
+            // 2. Hide the attack visual.
+            document.getElementById('attackDisplay').style.display = 'none';
 
-                // 3. Display the first, scary message.
-                document.getElementById('revealMessage').style.display = 'block';
+            // 3. Display the localized first, scary message.
+            document.getElementById('revealMessage').style.display = 'block';
 
-                // 4. Set the final shift with a dark red background.
-                document.body.style.backgroundColor = '#200000';
+            // 4. Set the final shift with a dark red background.
+            document.body.style.backgroundColor = '#200000';
 
-                // ==========================================================
-                // --- THE CONSECUTIVE HANDSHAKE FIX (Phase 3 -> Phase 4) ---
-                // ==========================================================
-                // We add a listener that waits for the `textTyping` animation
-                // to *completely finish* on the scaryText element.
-                const scaryTextEl = document.getElementById('scaryText');
-                scaryTextEl.addEventListener('animationend', (event) => {
-                    // Safety check: only run this if the `textTyping` animation ended.
-                    if (event.animationName === 'textTyping') {
-                        // 1. Trigger the final 5-second wait before safety reveal.
-                        runSafetyRevealTimer();
-                    }
-                });
-            }
+            // --- THE CONSECUTIVE HANDSHAKE FIX (Phase 3 -> Phase 4) ---
+            const scaryTextEl = document.getElementById('scaryText');
+            scaryTextEl.addEventListener('animationend', (event) => {
+                if (event.animationName === 'textTyping') {
+                    runSafetyRevealTimer();
+                }
+            });
+        }
 
-            // ==========================================================
-            // --- PHASE 4: The SAFETY REVEAL (Runs 5s later) ---
-            // ==========================================================
-            function runSafetyRevealTimer() {
-                setTimeout(() => {
-                    // 1. Remove the scary message visual.
-                    document.getElementById('revealMessage').style.display = 'none';
+        function runSafetyRevealTimer() {
+            // 15 seconds after typing finishes, trigger safety reveal.
+            setTimeout(() => {
+                // 1. Remove the scary message visual.
+                document.getElementById('revealMessage').style.display = 'none';
 
-                    // 2. Clear the red background.
-                    document.body.style.backgroundColor = 'black';
+                // 2. Clear the red background.
+                document.body.style.backgroundColor = 'black';
 
-                    // 3. Display the final, safety-confirming message.
-                    document.getElementById('safetyReveal').style.display = 'block';
+                // 3. Display the final, localized safety message.
+                document.getElementById('safetyReveal').style.display = 'block';
 
-                    // 4. Final visual confirmation is now standard Matrix green.
-                    document.body.style.color = '#00ff00';
-                }, 5000); // 5 SECONDS LATER (100% RELIABLE).
-            }
+                // 4. Final visual confirmation is now green.
+                document.body.style.color = '#00ff00';
+            }, 15000); // TRIGGER THE SAFETY REVEAL 15 SECONDS LATER.
         }
     </script>
 </body>
