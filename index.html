@@ -19,7 +19,7 @@
             overflow: hidden; /* Prevent scrolling during simulation */
         }
 
-        /* --- 2. PHASE 1: THE TRAP (Visible first) --- */
+        /* --- 2. PHASE 1: THE TRAP (VISIBLE FIRST) --- */
         #lureDisplay {
             width: 80%;
             display: flex; /* Initially visible */
@@ -108,11 +108,12 @@
             font-size: 1.3em;
             font-weight: bold;
             line-height: 1.5;
-            animation: textTyping 3s steps(40, end); /* Long typing effect */
+            animation: textTyping 3s steps(40, end); /* Typing effect takes 3s */
             white-space: pre-wrap; /* Preserve line breaks */
+            width: 100%; /* Ensure width is set for the typing effect */
         }
 
-        /* --- 5. PHASE 4: THE SAFETY REVEAL (15s+) --- */
+        /* --- 5. PHASE 4: THE SAFETY REVEAL (Triggered 5s later) --- */
         #safetyReveal {
             display: none; /* Hidden by default */
             color: #00ff00;
@@ -182,7 +183,7 @@
     </div>
 
     <div id="revealMessage">
-        <p class="finalText">
+        <p class="finalText" id="scaryText">
             SYSTEM_STATUS: COMPROMISED.<br><br>
             While you watched that countdown, our **AI Proxy Bot** completed its data exfiltration sweep.<br><br>
             We have **everything**.<br>
@@ -281,8 +282,24 @@
                 document.body.style.backgroundColor = '#200000';
 
                 // ==========================================================
-                // --- PHASE 4: The SAFETY REVEAL (5 seconds later) ---
+                // --- THE CONSECUTIVE HANDSHAKE FIX (Phase 3 -> Phase 4) ---
                 // ==========================================================
+                // We add a listener that waits for the `textTyping` animation
+                // to *completely finish* on the scaryText element.
+                const scaryTextEl = document.getElementById('scaryText');
+                scaryTextEl.addEventListener('animationend', (event) => {
+                    // Safety check: only run this if the `textTyping` animation ended.
+                    if (event.animationName === 'textTyping') {
+                        // 1. Trigger the final 5-second wait before safety reveal.
+                        runSafetyRevealTimer();
+                    }
+                });
+            }
+
+            // ==========================================================
+            // --- PHASE 4: The SAFETY REVEAL (Runs 5s later) ---
+            // ==========================================================
+            function runSafetyRevealTimer() {
                 setTimeout(() => {
                     // 1. Remove the scary message visual.
                     document.getElementById('revealMessage').style.display = 'none';
@@ -295,7 +312,7 @@
 
                     // 4. Final visual confirmation is now standard Matrix green.
                     document.body.style.color = '#00ff00';
-                }, 5000); // TRIGGER THE SAFETY REVEAL 5 SECONDS LATER.
+                }, 5000); // 5 SECONDS LATER (100% RELIABLE).
             }
         }
     </script>
